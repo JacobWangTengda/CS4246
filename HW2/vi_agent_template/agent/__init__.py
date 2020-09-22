@@ -190,6 +190,17 @@ def value_iteration(trn_fn, rwd_fn, gamma):
               matrix multiplications as is interferes with the evaluation script.
               Instead you can use "matmul()" function defined above
     '''
+
+    while True:
+        action_values = gamma * matmul(trn_fn, value_fn) + matmul(trn_fn, rwd_fn.transpose()).diagonal(axis1 = 1, axis2 = 2)
+        value_fn_new = np.max(action_values, axis = 0)
+        policy = np.argmax(action_values, axis = 0)
+        
+        if np.max(np.abs(value_fn_new - value_fn)) < delta:
+            break
+        else:
+            value_fn = value_fn_new
+
     return value_fn, policy
 
 
@@ -236,7 +247,7 @@ if not SUBMISSION:
                    {'lanes' : [LaneSpec(1, [-3, -1])] *2 + [LaneSpec(0, [0, 0])],'width' :4, 'gamma' : 0.99, 'seed' : 111, 'fin_pos' : Point(0,0), 'agent_pos': Point(3,2),'stochasticity': .5 },
                    {'lanes' : [LaneSpec(1, [-3, -1]), LaneSpec(0, [0, 0]), LaneSpec(1, [-3, -1])] ,'width' :4, 'gamma' : 0.999, 'seed' : 125, 'fin_pos' : Point(0,0), 'agent_pos': Point(3,2),'stochasticity': 0.9 }]
 
-    test_case_number = 0 #Change the index for a different test case
+    test_case_number = 5 #Change the index for a different test case
     LANES = test_config[test_case_number]['lanes']
     WIDTH = test_config[test_case_number]['width']
     RANDOM_SEED = test_config[test_case_number]['seed']

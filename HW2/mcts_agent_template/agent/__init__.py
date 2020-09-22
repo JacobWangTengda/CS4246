@@ -100,7 +100,7 @@ class MonteCarloTreeSearch:
         Function to build MCTS tree and return best action at initialState
         '''
         self.root = Node(state=initialState, parent=None)
-        for i in range(self.numiters):
+        for _ in range(self.numiters):
             self.addNodeAndBackpropagate()
         bestChild = self.chooseBestActionNode(self.root, 0)
         for action, cur_node in self.root.children.items():
@@ -139,12 +139,18 @@ class MonteCarloTreeSearch:
         '''
         FILL ME : This function should implement the backpropation step of MCTS.
                   Update the values of relevant variables in Node Class to complete this function
-        '''        
+        '''
+        while node:
+            node.totalReward += reward
+            node.numVisits += 1
+            node = node.parent
+
 
     def chooseBestActionNode(self, node, explorationValue):
         global random
         bestValue = float("-inf")
         bestNodes = []
+        N = node.numVisits
         for child in node.children.values():
             '''
             FILL ME : Populate the list bestNodes with all children having maximum value
@@ -153,6 +159,16 @@ class MonteCarloTreeSearch:
                        All the nodes that have the largest value should be included in the list bestNodes.
                        We will then choose one of the nodes in this list at random as the best action node. 
             '''
+            v = child.totalReward
+            n = child.numVisits
+            reward = v/n + explorationValue * math.sqrt(math.log(N)/n)
+            if reward > bestValue:
+                bestNodes = []
+                bestValue = reward
+            
+            if reward >= bestValue:
+                bestNodes.append(child)
+
         return random.choice(bestNodes)
 
 
@@ -165,7 +181,7 @@ if not SUBMISSION:
                    {'lanes' : [LaneSpec(2, [-3, -1])] *4,'width' :10, 'seed' : 125, 'iters': 400},
                    {'lanes' : [LaneSpec(2, [-3, -1])] *4,'width' :10, 'seed' : 25, 'iters': 300}]
 
-    test_case_number = 0  #Change the index for a different test case
+    test_case_number = 5  #Change the index for a different test case
     LANES = test_config[test_case_number]['lanes']
     WIDTH = test_config[test_case_number]['width']
     RANDOM_SEED = test_config[test_case_number]['seed']
