@@ -42,7 +42,8 @@ class ReplayBuffer():
         FILL ME : This function should initialize the replay buffer `self.buffer` with maximum size of `buffer_limit` (`int`).
                   len(self.buffer) should give the current size of the buffer `self.buffer`.
         '''
-        pass
+        self.buffer = []
+        self.buffer_limit = buffer_limit
     
     def push(self, transition):
         '''
@@ -55,7 +56,9 @@ class ReplayBuffer():
         Output:
             * None
         '''
-        pass
+        while len(self.buffer) >= self.buffer_limit:
+            self.buffer.pop(0)
+        self.buffer.append(transition)
     
     def sample(self, batch_size):
         '''
@@ -73,8 +76,14 @@ class ReplayBuffer():
                 * `dones`       (`torch.tensor` [batch_size, 1])
               All `torch.tensor` (except `actions`) should have a datatype `torch.float` and resides in torch device `device`.
         '''
-        pass
-
+        transitions = random.sample(self.buffer, batch_size)
+        states = torch.tensor([t[0] for t in transitions]).float().to(device)
+        actions = torch.tensor([t[1]for t in transitions]).to(device)
+        rewards = torch.tensor([t[2]for t in transitions]).float().to(device)
+        next_states = torch.tensor([t[3]for t in transitions]).float().to(device)
+        dones = torch.tensor([t[4] for t in transitions]).float().to(device)
+        return (states, actions, rewards, next_states, dones)
+    
     def __len__(self):
         '''
         Return the length of the replay buffer.
@@ -122,7 +131,10 @@ class BaseAgent(Base):
         Output: action (`Action` or `int`): representing the action to be taken.
                 if action is of type `int`, it should be less than `self.num_actions`
         '''
-        pass
+        random_action = random.randint(0, self.num_actions-1)
+        best_action = int(self.forward(state).squeeze().argmax())
+        prob = random.uniform(0,1)
+        return random_action if prob < epsilon else best_action
 
 class DQN(BaseAgent):
     def construct(self):
@@ -162,7 +174,11 @@ def compute_loss(model, target, states, actions, rewards, next_states, dones):
         * MSE Loss  : https://pytorch.org/docs/stable/nn.html#torch.nn.MSELoss
         * Huber Loss: https://pytorch.org/docs/stable/nn.html#torch.nn.SmoothL1Loss
     '''
-    pass
+    loss_function = nn.SmoothL1Loss()
+    model_output = model(states).gather(1, actions)
+    Q_target = rewards + gamma * (1 - dones) * target(next_states)
+    target_output = Q_target.max(1)[0].unsqueeze(1)
+    return loss_function(input = model_output, target = target_output)
 
 def optimize(model, target, memory, optimizer):
     '''
